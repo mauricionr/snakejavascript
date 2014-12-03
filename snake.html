@@ -1,0 +1,146 @@
+<html>
+<!--Desenvolvido por Rodrigo Schio (schio.rodrigo@gmail.com)(2004-2011)-->
+<title>Snake for Browser by Rodrigo Schio</title>
+<style>td{ border:1px solid #e1e1e1; background-color:#f1f1f1; font-size:10px; height:20px; width:20px; font-weight:bold; }</style>
+<body onkeydown="pegadirecao(window.event?event.keyCode:event.which);">
+<div id=main></div>
+<div id=menu align=center style='padding-top:10px; font-weight:bold;'><input type=button value=Inicio onclick="inicializa();"></div>
+<div id=recordes style='z-index:2; position:absolute; background-color:#ddd; top:0px; left:0px; text-align:center; padding-top:50px; display:none;'><iframe id=frm name=frm frameborder=0></iframe></div>
+<script>
+function inicializa()
+{	for(linha=0;linha<20;linha++)for(x=0;x<32;x++)$(linha+","+x).style.background='#f1f1f1';
+	snk1.corpo=[[8,0],[8,0],[8,0],[8,0],[8,0],[8,0],[8,0],[8,1]];
+	snk2.corpo=[[12,31],[12,31],[12,31],[12,31],[12,31],[12,31],[12,31],[12,30]];
+	snk1.dir=1;
+	snk2.dir=3;
+	snk1.pontos=0;
+	snk2.pontos=0
+	geramaca();
+	$('menu').innerHTML="Fase "+fase;
+	anda();
+}
+function geramaca()
+{	do
+	{	x=Math.floor(Math.random()*20);
+		y=Math.floor(Math.random()*32);
+		var flag=false;
+		for(n=0;n<snk1.corpo.length;n++)if(snk1.corpo[n][0]==x&&snk1.corpo[n][1]==y)flag=true;
+		for(n=0;n<snk2.corpo.length;n++)if(snk2.corpo[n][0]==x&&snk2.corpo[n][1]==y)flag=true;
+	}while(flag);
+	$(x+","+y).style.background='#FF0000';
+	maca=[x,y];
+}
+function pegadirecao(lado)
+{	switch(lado)
+	{	case 37: if(snk1.cabeca()[1]!=snk1.corpo[snk1.corpo.length-2][1]+1)snk1.dir=3; break;
+		case 38: if(snk1.cabeca()[0]!=snk1.corpo[snk1.corpo.length-2][0]+1)snk1.dir=0; break;
+		case 39: if(snk1.cabeca()[1]!=snk1.corpo[snk1.corpo.length-2][1]-1)snk1.dir=1; break;
+		case 40: if(snk1.cabeca()[0]!=snk1.corpo[snk1.corpo.length-2][0]-1)snk1.dir=2; break;
+	}
+}
+function anda()
+{	snk1.apaga();
+	snk2.apaga();
+	snk1.desloca();
+	snk2.desloca();
+	if(snk2.dir==1||snk2.dir==3)
+	{	if(maca[0]!=snk2.cabeca()[0])
+		if(maca[1]==snk2.cabeca()[1])
+			snk2.dir=((Math.abs(maca[0]-snk2.cabeca()[0])<10==maca[0]<snk2.cabeca()[0])?0:2);
+	}
+	else
+	{	if(maca[1]!=snk2.cabeca()[1])
+		if(maca[0]==snk2.cabeca()[0])
+			snk2.dir=((Math.abs(maca[1]-snk2.cabeca()[1])<16==maca[1]<snk2.cabeca()[1])?3:1);
+	}
+	var flag=false;
+	if(snk2.dir==1||snk2.dir==3)
+	{	for(x=0;x<snk1.corpo.length;x++)if(snk1.corpo[x][0]==snk2.cabeca()[0]&&Math.abs(snk1.corpo[x][1]-snk2.cabeca()[1])==1)flag=true;
+		if(flag)snk2.dir=((Math.abs(maca[0]-snk2.cabeca()[0])<10==maca[0]<snk2.cabeca()[0])?0:2);
+	}
+	else
+	{	for(x=0;x<snk1.corpo.length;x++)if(snk1.corpo[x][1]==snk2.cabeca()[1]&&Math.abs(snk1.corpo[x][0]-snk2.cabeca()[0])==1)flag=true;
+		if(flag)snk2.dir=((Math.abs(maca[1]-snk2.cabeca()[1])<16==maca[1]<snk2.cabeca()[1])?3:1);
+	}
+	snk1.move();
+	snk2.move();
+	snk1.deglute();
+	snk2.deglute();
+	snk1.pinta();
+	snk2.pinta();
+	flag=false;
+	for(n=0;n<snk1.corpo.length-1;n++)
+	{	if(snk1.cabeca()[0]==snk1.corpo[n][0]&&snk1.cabeca()[1]==snk1.corpo[n][1]) flag=1;
+		if(snk2.cabeca()[0]==snk1.corpo[n][0]&&snk2.cabeca()[1]==snk1.corpo[n][1]) flag=2;
+	}
+	for(n=0;n<snk2.corpo.length-1;n++)
+	{	if(snk1.cabeca()[0]==snk2.corpo[n][0]&&snk1.cabeca()[1]==snk2.corpo[n][1]) flag=1;
+		if(snk2.cabeca()[0]==snk2.corpo[n][0]&&snk2.cabeca()[1]==snk2.corpo[n][1]) flag=2;
+	}
+	if(!flag)setTimeout("anda()",fase<9?velocidades[fase]:50);
+	else
+	{	if(flag==1||snk1.pontos<snk2.pontos)
+		{	totalpontos+=snk1.pontos*10+((fase-1)*6);
+			$('menu').innerHTML="Voce perdeu.<br>"+(flag==1?"":"Fez "+snk1.pontos+" pontos contra "+snk2.pontos+" pontos da cobra adversária.<br>")+"<input type=button value=Inicio onclick='inicializa();'>";
+			fase=1;
+			totalpontos=0;
+		}
+		else
+		{	fase++;
+			totalpontos+=snk1.pontos*10+((fase-1)*6);
+			inicializa();
+		}
+	}
+}
+$=function(e){return(document.getElementById(e));};
+texto="<table align=center cellpadding=0 cellspacing=0 style='border:2px solid #000000;'><tr>";
+for(linha=0;linha<20;linha++)for(x=0;x<32;x++)texto+="<td id='"+linha+","+x+"'>&nbsp;</td>"+(x==31?"</tr><tr>":"");
+texto+="</tr></table>";
+$('main').innerHTML=texto;
+snakes=function(c)
+{	this.cor=c;
+	this.pedaco=function(x){return($(this.corpo[x][0]+","+this.corpo[x][1]));};
+	this.apaga=function(){if(this.pedaco(0)!=this.pedaco(this.corpo.length-2))this.pedaco(0).style.background='#f1f1f1';};
+	this.desloca=function()
+	{	for(n=0;n<this.corpo.length-1;n++)
+		{	this.corpo[n][0]=this.corpo[n+1][0];
+			this.corpo[n][1]=this.corpo[n+1][1];
+		}
+	};
+	this.deglute=function()
+	{	if(this.cabeca()[0]==maca[0]&&this.cabeca()[1]==maca[1])
+		{	geramaca();
+			this.corpo.splice(0,0,[this.corpo[this.corpo.length-2][0],this.corpo[this.corpo.length-2][1]]);
+			this.pontos++;
+		}
+	};
+	this.move=function()
+	{	var val=this.cabeca();
+		switch(this.dir)
+		{	case 3:val[1]--; break;
+			case 0:val[0]--; break;
+			case 1:val[1]++; break;
+			case 2:val[0]++; break;
+		}
+		if(val[1]==-1)val[1]=31;
+		if(val[1]==32)val[1]=0;
+		if(val[0]==-1)val[0]=19;
+		if(val[0]==20)val[0]=0;
+		this.corpo[this.corpo.length-1]=[val[0],val[1]];
+	};
+	this.pinta=function()
+	{	this.pedaco(this.corpo.length-1).style.background=this.cor;
+	};
+	this.cabeca=function()
+	{	return this.corpo[this.corpo.length-1];
+	};
+};
+var snk1=new snakes("#999");
+var snk2=new snakes("#666");
+var maca;
+var fase=1;
+var velocidades=["",200,180,160,140,120,100,80,75];
+var totalpontos=0;
+</script>
+</body>
+</html>
